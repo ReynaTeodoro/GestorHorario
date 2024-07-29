@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horario</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .schedule {
+            width: 100%;
+            margin: 20px auto;
+            border-collapse: collapse;
+        }
+        .schedule th, .schedule td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        .schedule th {
+            background-color: #f2f2f2;
+        }
+        .time-slot {
+            height: 100px;
+        }
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(227, 227, 227, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .overlay-content {
+            background: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            width: 80%;
+            max-width: 600px;
+        }
+        #close-overlay {
+            display: block;
+            margin: 0 auto 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Columna de Materias -->
+            <div class="col-md-3 bg-light border-right">
+                <h3 class="my-4">Materias</h3>
+                <ul id="materias-list" class="list-group">
+                    {% for materia in materias %}
+                        <li class="list-group-item">
+                            <a href="#" class="materia-link" data-id="{{ materia.id }}">{{ materia.nombre }}</a>
+                            <ul class="list-group mt-2 curso-container" id="materia-{{ materia.id }}" style="display: none;">
+                                {% for curso in materia.curso_set.all %}
+                                    <li class="list-group-item">
+                                        <strong>{{ curso.nombre }}</strong>
+                                        <ul class="list-group mt-2">
+                                            {% for horario in curso.horario_set.all %}
+                                                <li class="list-group-item">
+                                                    {{ horario.dia }}: {{ horario.hora_inicio }} - {{ horario.hora_fin }}
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <!-- Contenido Principal -->
+            <div class="col-md-9">
+                <!-- Tabla de horarios -->
+                <table class="schedule table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Hs</th>
+                            <th>Lunes</th>
+                            <th>Martes</th>
+                            <th>Miércoles</th>
+                            <th>Jueves</th>
+                            <th>Viernes</th>
+                            <th>Sábado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>11:00 - 12:00</td>
+                            <td></td>
+                            <td rowspan="2">Inglés II<br>(No Inscripto)<br>3K7<br>11:20-12:50</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>12:00 - 13:00</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>13:00 - 14:00</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>14:00 - 15:00</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>15:00 - 16:00</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>16:00 - 17:00</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>17:00 - 18:00</td>
+                            <td rowspan="2">Diseño de Sistemas de Información<br>(Inscripto)<br>17:20-19:35<br>3K5</td>
+                            <td></td>
+                            <td rowspan="2">Diseño de Sistemas de Información<br>(Inscripto)<br>3K5<br>17:20-19:35</td>
+                            <td rowspan="3">Probabilidad y Estadística<br>(No Inscripto)<br>2K8<br>17:20-19:35</td>
+                            <td rowspan="3">Probabilidad y Estadística<br>(No Inscripto)<br>2K8<br>17:20-19:35</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>18:00 - 19:00</td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>19:00 - 20:00</td>
+                            <td rowspan="4">Comunicación de Datos<br>(Inscripto)<br>3K5<br>19:55-23:00</td>
+                            <td rowspan="4">Desarrollo de Software<br>(Inscripto)<br>3K5<br>19:55-23:00</td>
+                            <td rowspan="4">Desarrollo de Software<br>(Inscripto)<br>3K5<br>19:55-23:00</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>20:00 - 21:00</td>
+                            <td rowspan="3">Base de Datos<br>(Inscripto)<br>3K5<br>19:55-22:55</td>
+                            <td rowspan="3">Base de Datos<br>(Inscripto)<br>3K5<br>19:55-22:55</td>
+                            <td></td>
+                            
+                        </tr>
+                        <tr>
+                            <td>21:00 - 22:00</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>22:00 - 23:00</td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="overlay" id="overlay">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const overlay = document.getElementById('overlay');
+        const closeOverlayBtn = document.getElementById('close-overlay');
+    
+        document.querySelectorAll('.materia-link').forEach(link => {
+            link.addEventListener('click', async (event) => {
+                event.preventDefault();
+                const materiaId = link.getAttribute('data-id');
+    
+                // Mostrar el overlay
+                //overlay.style.display = 'flex';
+                console.log('click');
+    
+                // Aquí puedes hacer la lógica para actualizar el contenido del overlay
+            });
+        });
+    
+        closeOverlayBtn.addEventListener('click', () => {
+            overlay.style.display = 'none';
+        });
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var materiaLinks = document.querySelectorAll('.materia-link');
+
+        materiaLinks.forEach(function(link) {
+            link.addEventListener('click', function(event) {
+                event.preventDefault();
+                
+                var materiaId = this.getAttribute('data-id');
+                var container = document.getElementById('materia-' + materiaId);
+
+                // Toggle visibility of the container
+                if (container.style.display === 'none') {
+                    container.style.display = 'block';
+                } else {
+                    container.style.display = 'none';
+                }
+            });
+        });
+    });
+</script>
+</body>
+</html>
