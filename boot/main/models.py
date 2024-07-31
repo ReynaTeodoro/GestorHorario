@@ -16,6 +16,7 @@ class Modalidad(models.Model):
 class Materia(models.Model):
     regular = models.BooleanField(default=True)
     aprobado = models.BooleanField(default=True)
+    electiva = models.BooleanField(default=False)
     color = models.CharField(max_length=7, default='#000000')
     nivel = models.ForeignKey(Nivel, on_delete=models.CASCADE, related_name='materias', null=True, blank=True)
     nombre = models.CharField(max_length=200)
@@ -41,10 +42,27 @@ class Curso(models.Model):
     nombre = models.CharField( max_length=50)
 
     def __str__(self):
-        return f'{self.materia.nombre} '
+        return f'{self.nombre} - {self.materia.nombre}'
 
 class Horario(models.Model):
     curso = models.ForeignKey(Curso, on_delete=models.CASCADE, related_name='horarios', null=True, blank=True)
-    dia = models.CharField(max_length=200, null=True, blank=True)
+    modalidad = models.ForeignKey(Modalidad, on_delete=models.CASCADE, null=True, blank=True)
+    DIAS_SEMANA = [
+        ('LUN', 'Lunes'),
+        ('MAR', 'Martes'),
+        ('MIE', 'Miércoles'),
+        ('JUE', 'Jueves'),
+        ('VIE', 'Viernes'),
+        ('SAB', 'Sábado'),
+    ]
+    
+    dia = models.CharField(
+        max_length=3,
+        choices=DIAS_SEMANA,
+        null=True,
+        blank=True
+    )
     hora_inicio = models.TimeField(null=True, blank=True)
     hora_fin = models.TimeField(null=True, blank=True)
+    def __str__(self):
+        return f'{self.dia} - {self.hora_inicio} - {self.hora_fin}'
