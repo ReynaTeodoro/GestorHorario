@@ -53,7 +53,7 @@
                 </ul>
             </div>
             <div class="col-md-9">
-                <table class="schedule table table-bordered">
+                <table class="schedule table table-bordered" id="tablaHorario">
                     <thead>
                         <tr>
                             <th>Hs</th>
@@ -63,14 +63,6 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for hora in horas %}
-                            <tr>
-                                <td>{{ hora }}</td>
-                                {% for dia in dias %}
-                                    <td></td>
-                                {% endfor %}
-                            </tr>
-                        {% endfor %}
                     </tbody>
                 </table>
             </div>
@@ -94,33 +86,186 @@
                     }
 
                     const response = await fetch(`/cursos-y-horarios/${materiaId}/`);
+                    
                     const data = await response.json();
                     console.log(data);
-
-                    const cursosHtml = data.cursos.map(curso => `
-                        <div class="card curso-card">
-                            <div class="card-header" id="heading${curso.id}">
-                                <h5 class="mb-0">
-                                    ${curso.nombre}
-                                </h5>
+                    const cursosHtml = data.cursos.map(curso => {
+                        const horariosFormateados = curso.horarios.map(horario => 
+                            `${horario.dia}: Inicio;${horario.hora_inicio} - Fin;${horario.hora_fin}`
+                        ).join(' |'); 
+                        
+                        return `
+                            <div class="card curso-card" draggable="true" ondragstart="event.dataTransfer.setData('text/plain', '${curso.nombre} ${curso.materia} ${horariosFormateados}')">
+                                <div class="card-header" id="heading${curso.id}">
+                                    <h5 class="mb-0">
+                                        ${curso.nombre} - ${curso.modalidad}
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-group">
+                                        ${curso.horarios.map(horario => `
+                                            <li class="list-group-item">
+                                                ${horario.dia}: Inicio;${horario.hora_inicio} - Fin;${horario.hora_fin}
+                                            </li>
+                                        `).join('')}
+                                    </ul>
+                                </div>
                             </div>
-                            <div class="card-body">
-                                <ul class="list-group">
-                                    ${curso.horarios.map(horario => `
-                                        <li class="list-group-item">
-                                            ${horario.dia}: ${horario.hora_inicio} - ${horario.hora_fin}
-                                        </li>
-                                    `).join('')}
-                                </ul>
-                            </div>
-                        </div>
-                    `).join('');
+                        `;
+                    }).join('');
 
                     collapseElement.innerHTML = cursosHtml;
                     $(collapseElement).collapse('show');
                 });
             });
         });
+    </script>
+    <script>
+        var tableData = [];
+        function buscarCelda(dia, hora) {
+
+            // Mapeo de días a índices de columna
+            const diasMap = {
+                'LUN': 1,
+                'MAR': 2,
+                'MIE': 3,
+                'JUE': 4,
+                'VIE': 5,
+                'SAB': 6,
+                'DOM': 7
+            };
+
+            // Verifica si la matriz de datos existe
+            if (!Array.isArray(tableData) || tableData.length === 0) {
+                console.log('Matriz de datos no válida o vacía');
+                return;
+            }
+
+            const filaEncontrada = tableData[0].find(horaEnTabla => horaEnTabla === hora);
+
+            if (!filaEncontrada) {
+                console.log('Hora no encontrada');
+            } else {
+                // Encontrar la columna correspondiente al día
+                const columnaEncontrada = diasMap[dia];
+
+                if (columnaEncontrada === undefined) {
+                    console.log('Día no encontrado');
+                } else {
+                    // La fila se encuentra en la posición de `tableData.indexOf(filaEncontrada)`
+                    const filaIndex = tableData[0].indexOf(filaEncontrada);
+                    return  { fila: filaIndex, columna: columnaEncontrada }
+                }
+            }
+        }
+        function updateTable(){
+            const tbody = document.getElementById("tablaHorario").querySelector("tbody");
+            tableData.forEach((columnData, col) => {
+                columnData.forEach((cellData, row) => {
+                    const cell = tbody.rows[row].cells[col];
+                    cell.innerText = cellData;
+                });
+            });
+        }
+        function parseCursoYHorarios(dataString) {
+            console.log(dataString);
+            // Divide la cadena en el nombre del curso y los horarios
+            const [curso, horariosString] = dataString.split(/ (?=\w+:)/);
+
+            // Reemplaza el delimitador específico por una coma para facilitar el análisis
+            const horariosStringConDelimitador = horariosString.replace(/, /g, '|');
+
+            // Inicializa el objeto que contendrá el curso y los horarios
+            const result = {
+                curso: curso,
+                horarios: []
+            };
+
+            // Divide la cadena de horarios usando el delimitador específico
+            const partesHorarios = horariosStringConDelimitador.split('|');
+
+            // Utiliza una expresión regular para extraer los días, horas de inicio y fin
+            const horarioPattern = /(\w+): Inicio;(\d{2}:\d{2}) - Fin;(\d{2}:\d{2})/;
+
+            // Procesa cada parte de horarios
+            partesHorarios.forEach(parte => {
+                const match = horarioPattern.exec(parte);
+                if (match) {
+                    result.horarios.push({
+                        dia: match[1],
+                        inicio: match[2],
+                        fin: match[3]
+                    });
+                }
+            });
+
+            return result;
+        }
+        function dropCurso(data) {
+            const cursoYHorarios = parseCursoYHorarios(data);
+            cursoYHorarios.horarios.forEach(horario => {
+                console.log(cursoYHorarios);
+                hora_inicio = horario.inicio;
+                hora_fin = horario.fin;
+                celdaInicio = buscarCelda(horario.dia, horario.inicio);
+                celdaFin = buscarCelda(horario.dia, horario.fin);
+                celdaFin.fila -=1
+                for (let index = celdaInicio.fila; index <= celdaFin.fila; index++) {
+                    tableData[celdaInicio.columna][index] = cursoYHorarios.curso;
+                }
+                console.log(tableData);
+                updateTable()
+            });
+            
+        }
+        function initTable(idTabla,numColumns,numRows,startHour,startMinute) {
+
+
+            // Generar los tiempos en intervalos de 5 minutos desde las 8:00 hasta las 24:00
+            const times = [];
+
+            while (times.length < numRows) {
+                const hour = String(startHour).padStart(2, '0');
+                const minute = String(startMinute).padStart(2, '0');
+                times.push(`${hour}:${minute}`);
+                startMinute += 5;
+                if (startMinute === 60) {
+                    startMinute = 0;
+                    startHour++;
+                }
+            }
+
+            // Crear el array base con 6 columnas (la primera columna será `times`)
+            const tableData = Array.from({ length: numColumns }, () => Array(numRows).fill(''));
+            tableData[0] = times;
+
+            // Obtener la referencia del cuerpo de la tabla
+            const tbody = document.getElementById("tablaHorario").querySelector("tbody");
+
+            // Crear cuerpo de la tabla
+            for (let row = 0; row < numRows; row++) {
+                const tr = tbody.insertRow();
+                for (let col = 0; col < numColumns; col++) {
+                    const td = tr.insertCell();
+                    td.innerText = tableData[col][row];
+                    td.ondragover = (event) => event.preventDefault();
+                    td.ondrop = (event) => {
+                        event.preventDefault();
+                        const data = event.dataTransfer.getData("text/plain");
+                        dropCurso(data);
+                    };
+                }
+            }
+            return tableData;
+        }
+        document.addEventListener("DOMContentLoaded", function() {
+            const numColumns = 7;
+            const numRows = 12 * 16;
+            let startHour = 8;
+            let startMinute = 0;
+            tableData = initTable("tablaHorario",numColumns,numRows,startHour,startMinute);
+        });
+        
     </script>
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>

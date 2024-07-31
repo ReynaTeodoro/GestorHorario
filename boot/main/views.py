@@ -8,7 +8,7 @@ def home_view(request):
     cursos = Curso.objects.all()
     horarios = Horario.objects.all()
     modalidades = Modalidad.objects.all()
-    dias = ["Lunes", "Martes", "Miercoles", "Jueves", "Viernes"]
+    dias = ["Lunes", "Martes", "Miercoles", "Jueves", "Viernes","Sabado"]
     horas = ["08:00", "08:45", "09:30", "10:15", "11:00", "11:45", "12:05", "14:00"]
     return render(request, 'home/home.html', {'materias': materias, 'cursos': cursos, 'horarios': horarios, 'dias': dias, 'horas': horas,'modalidades':modalidades})
 # views.py
@@ -21,6 +21,9 @@ def cursos_view(request, materia_id):
         'cursos': [
             {
                 'nombre': curso.nombre,
+                'materia': curso.materia.nombre,
+                'modalidad': curso.horarios.first().modalidad.nombre,
+                'color': curso.materia.color,
                 'horarios': [
                     {
                         'dia': horario.dia,
