@@ -36,16 +36,36 @@
 </head>
 <body>
     <div class="container-fluid">
-            <select class="form-select mt-5" aria-label="Large select example">
-                {% for modalidad in modalidades %}
-                    <option value="{{ modalidad.id }}">{{ modalidad.nombre }}</option>
-                {% endfor %}
-              </select>
+            
         <div class="row">
-            <div class="col-md-3 bg-light border-right p-4">
+            <div class="col-md-3 border-right p-4">
+                <input type="text" id="search-input" class="form-control mb-3" placeholder="Buscar materia" list="materias-datalist">
+            <datalist id="materias-datalist">
+                <!-- Las opciones del datalist se actualizarán aquí -->
+            </datalist> 
+                <select id="nivel-select" class="form-select mb-3">
+                    <option value="">Todos los niveles</option>
+                    {% for nivel in niveles %}
+                        <option value="{{ nivel.numero }}">Año: {{ nivel.numero }}</option>
+                    {% endfor %}
+                </select>
+                <select class="form-select mb-3" aria-label="Large select example">
+                    <option value="">Todas las modalidades</option>
+                    {% for modalidad in modalidades %}
+                        <option value="{{ modalidad.id }}">{{ modalidad.nombre }}</option>
+                    {% endfor %}
+                  </select>
+                <div class="form-check form-check-inline mb-3">
+                    <input class="form-check-input" type="checkbox" id="electivas-checkbox">
+                    <label class="form-check-label" for="electivas-checkbox">Electivas</label>
+                </div>
+                <div class="form-check form-check-inline mb-3">
+                    <input class="form-check-input" type="checkbox" id="correlativas-checkbox">
+                    <label class="form-check-label" for="correlativas-checkbox">Correlativas</label>
+                </div>
                 <ul id="materias-list" class="list-group">
                     {% for materia in materias %}
-                        <li class="list-group-item p-2">
+                        <li class="list-group-item p-2 materia-item" data-nivel="{{ materia.nivel.id }}">
                             <a href="#" class="materia-link text-decoration-none" data-id="{{ materia.id }}" aria-expanded="false" aria-controls="collapse{{ materia.id }}">{{ materia.nombre }}</a>
                             <div id="collapse{{ materia.id }}" class="collapse"></div>
                         </li>
@@ -119,6 +139,7 @@
                 });
             });
         });
+    
     </script>
     <script>
         var tableData = [];
@@ -197,20 +218,16 @@
             
             // Encontrar el color en la cadena
             const colorMatch = dataString.match(colorPattern);
-            console.log(colorMatch);
             const color = colorMatch ? `#${colorMatch[1]}` : null;
-            console.log(color);
             return color
         }
         function parseCursoYHorarios(dataString) {
-            console.log(dataString);
 
 
             const colorPattern = /&Color;#(\w+);/;
             
 
             const colorMatch = dataString.match(/&Color;([#\da-fA-F]{6})/);
-            console.log(colorMatch);
             const color = colorMatch ? `${colorMatch[1]}` : null;
 
             // Si se encuentra el color, elimina la parte del color de la cadena y agrega un delimitador especial '&'
@@ -224,7 +241,6 @@
 
             // Inicializa el objeto que contendrá el curso, el color y los horarios
             colorHEX = parseColor(dataString)
-            console.log('Color HEX: ', colorHEX);
             const result = {
                 curso: curso.trim(),
                 color: colorHEX,
@@ -254,7 +270,6 @@
         function dropCurso(data) {
             const cursoYHorarios = parseCursoYHorarios(data);
             cursoYHorarios.horarios.forEach(horario => {
-                console.log(cursoYHorarios);
                 hora_inicio = horario.inicio;
                 hora_fin = horario.fin;
                 celdaInicio = buscarCelda(horario.dia, horario.inicio);
@@ -263,7 +278,6 @@
                 for (let index = celdaInicio.fila; index <= celdaFin.fila; index++) {
                     tableData[celdaInicio.columna][index] = {curso: cursoYHorarios.curso, color: cursoYHorarios.color};
                 }
-                console.log(tableData);
                 updateTable()
             });
             
@@ -314,6 +328,53 @@
             let startHour = 8;
             let startMinute = 0;
             tableData = initTable("tablaHorario",numColumns,numRows,startHour,startMinute);
+            console.log('iniciooo');
+            var materias = {{ materias_no_aprobadas|safe }};
+            console.log('materias:',materias);
+        });
+        
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Obtén el elemento input y el datalist
+            var searchInput = document.getElementById('search-input');
+            var materiasDatalist = document.getElementById('materias-datalist');
+
+            // Suponiendo que materias es un array de objetos pasados desde el contexto
+            var materias = {{ materias_no_aprobadas|safe }};
+
+            // Función para actualizar las opciones del datalist
+            function updateDatalist(list) {
+                materiasDatalist.innerHTML = ''; // Limpia las opciones actuales
+                list.forEach(function(materia) {
+                    var option = document.createElement('option');
+                    option.value = materia.fields.nombre; // Cambia esto si tu estructura es diferente
+                    materiasDatalist.appendChild(option);
+                });
+            }
+
+            // Inicializa el datalist con todas las materias
+            updateDatalist(materias);
+
+            // Event listener para buscar en la lista
+            searchInput.addEventListener('input', function() {
+                var searchText = searchInput.value.toLowerCase();
+                var filteredMaterias = materias.filter(function(materia) {
+                    return materia.fields.nombre.toLowerCase().includes(searchText);
+                });
+                updateDatalist(filteredMaterias);
+            });
+            // Event listener para seleccionar una opción
+        searchInput.addEventListener('change', function() {
+                var selectedValue = searchInput.value;
+                logSelectedOption(selectedValue);
+            });
+
+            // Función para hacer log de la opción seleccionada
+            function logSelectedOption(option) {
+                console.log('Opción seleccionada:', option);
+                // Aquí puedes hacer lo que necesites con la opción seleccionada
+            }
         });
         
     </script>

@@ -1,16 +1,25 @@
 from django.shortcuts import render
-from .models import Materia, Curso, Horario,Modalidad
+from .models import Materia, Curso, Horario,Modalidad,Nivel
 from django.http import JsonResponse
+from django.core.serializers import serialize
 # Create your views here.
 def home_view(request):
     materias = Materia.objects.filter(aprobado=False)
+    aprobadas = Materia.objects.filter(aprobado=True)
     #materias = Materia.objects.all()
     cursos = Curso.objects.all()
     horarios = Horario.objects.all()
     modalidades = Modalidad.objects.all()
+    niveles = Nivel.objects.all()
     dias = ["Lunes", "Martes", "Miercoles", "Jueves", "Viernes","Sabado"]
-    horas = ["08:00", "08:45", "09:30", "10:15", "11:00", "11:45", "12:05", "14:00"]
-    return render(request, 'home/home.html', {'materias': materias, 'cursos': cursos, 'horarios': horarios, 'dias': dias, 'horas': horas,'modalidades':modalidades})
+    materias_no_aprobadas = serialize('json', materias)
+    materias_aprobadas = serialize('json', aprobadas)
+    return render(request, 'home/home.html', {'materias': materias, 'cursos': cursos,
+                                               'horarios': horarios, 'dias': dias,
+                                                'modalidades':modalidades,
+                                                'niveles':niveles,'aprobadas':aprobadas,
+                                                'materias_no_aprobadas':materias_no_aprobadas,
+                                                'materias_aprobadas':materias_aprobadas})
 # views.py
 
 
