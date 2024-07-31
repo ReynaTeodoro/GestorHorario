@@ -89,13 +89,13 @@
                     
                     const data = await response.json();
                     console.log(data);
-                    const cursosHtml = data.cursos.map(curso => {
+                    const cursosHtml = data.cursos.map(curso => {   
                         const horariosFormateados = curso.horarios.map(horario => 
                             `${horario.dia}: Inicio;${horario.hora_inicio} - Fin;${horario.hora_fin}`
                         ).join(' |'); 
                         
                         return `
-                            <div class="card curso-card" draggable="true" ondragstart="event.dataTransfer.setData('text/plain', '${curso.nombre} ${curso.materia} ${horariosFormateados}')">
+                            <div class="card curso-card" draggable="true" ondragstart="event.dataTransfer.setData('text/plain', '${curso.nombre} ${curso.materia}&Color;${curso.color} ${horariosFormateados}')">
                                 <div class="card-header" id="heading${curso.id}">
                                     <h5 class="mb-0">
                                         ${curso.nombre} - ${curso.modalidad}
@@ -122,6 +122,21 @@
     </script>
     <script>
         var tableData = [];
+        function getContrastingTextColor(hexColor) {
+    // Remove the hash symbol if present
+    hexColor = hexColor.replace('#', '');
+
+    // Convert the hex color to RGB
+    let r = parseInt(hexColor.substring(0, 2), 16);
+    let g = parseInt(hexColor.substring(2, 4), 16);
+    let b = parseInt(hexColor.substring(4, 6), 16);
+
+    // Calculate the luminance of the color
+    let luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+    // Return black for light colors and white for dark colors
+    return luminance > 0.5 ? 'black' : 'white';
+}
         function buscarCelda(dia, hora) {
 
             // Mapeo de días a índices de columna
@@ -161,27 +176,62 @@
         function updateTable(){
             const tbody = document.getElementById("tablaHorario").querySelector("tbody");
             tableData.forEach((columnData, col) => {
-                columnData.forEach((cellData, row) => {
+                if (col!=0) {
+                    columnData.forEach((cellData, row) => {
                     const cell = tbody.rows[row].cells[col];
-                    cell.innerText = cellData;
+                    if(cellData){
+                        const color = String(cellData.color).trim();
+                        cell.innerText = cellData.curso;
+                        cell.style.backgroundColor = cellData.color;
+                        cell.style.color = getContrastingTextColor(color);
+                    }
                 });
+                    
+                }
+                
             });
+        }
+        function parseColor(dataString){
+            // Patron para encontrar el color
+            const colorPattern = /&Color;#([\da-fA-F]{6})/;
+            
+            // Encontrar el color en la cadena
+            const colorMatch = dataString.match(colorPattern);
+            console.log(colorMatch);
+            const color = colorMatch ? `#${colorMatch[1]}` : null;
+            console.log(color);
+            return color
         }
         function parseCursoYHorarios(dataString) {
             console.log(dataString);
-            // Divide la cadena en el nombre del curso y los horarios
-            const [curso, horariosString] = dataString.split(/ (?=\w+:)/);
 
+
+            const colorPattern = /&Color;#(\w+);/;
+            
+
+            const colorMatch = dataString.match(/&Color;([#\da-fA-F]{6})/);
+            console.log(colorMatch);
+            const color = colorMatch ? `${colorMatch[1]}` : null;
+
+            // Si se encuentra el color, elimina la parte del color de la cadena y agrega un delimitador especial '&'
+            const dataStringSinColor = color ? dataString.replace(colorPattern, '') : dataString;
+
+            // Divide la cadena en el nombre del curso y los horarios usando el delimitador especial '&'
+            const [curso, horariosString] = dataStringSinColor.split('&');
+            
             // Reemplaza el delimitador específico por una coma para facilitar el análisis
-            const horariosStringConDelimitador = horariosString.replace(/, /g, '|');
+            const horariosStringConDelimitador = horariosString ? horariosString.replace(/, /g, '|') : '';
 
-            // Inicializa el objeto que contendrá el curso y los horarios
+            // Inicializa el objeto que contendrá el curso, el color y los horarios
+            colorHEX = parseColor(dataString)
+            console.log('Color HEX: ', colorHEX);
             const result = {
-                curso: curso,
+                curso: curso.trim(),
+                color: colorHEX,
                 horarios: []
             };
 
-            // Divide la cadena de horarios usando el delimitador específico
+            // Divide la cadena de horarios usando el delimitador específico '|'
             const partesHorarios = horariosStringConDelimitador.split('|');
 
             // Utiliza una expresión regular para extraer los días, horas de inicio y fin
@@ -211,7 +261,7 @@
                 celdaFin = buscarCelda(horario.dia, horario.fin);
                 celdaFin.fila -=1
                 for (let index = celdaInicio.fila; index <= celdaFin.fila; index++) {
-                    tableData[celdaInicio.columna][index] = cursoYHorarios.curso;
+                    tableData[celdaInicio.columna][index] = {curso: cursoYHorarios.curso, color: cursoYHorarios.color};
                 }
                 console.log(tableData);
                 updateTable()
