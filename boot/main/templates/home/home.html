@@ -49,7 +49,7 @@
                         <option value="{{ nivel.numero }}">Año: {{ nivel.numero }}</option>
                     {% endfor %}
                 </select>
-                <select class="form-select mb-3" aria-label="Large select example">
+                <select class="form-select mb-3" id="modalidad-select" aria-label="Select Modalidades">
                     <option value="">Todas las modalidades</option>
                     {% for modalidad in modalidades %}
                         <option value="{{ modalidad.id }}">{{ modalidad.nombre }}</option>
@@ -339,6 +339,10 @@
             // Obtén el elemento input y el datalist
             var searchInput = document.getElementById('search-input');
             var materiasDatalist = document.getElementById('materias-datalist');
+            const electivasCheckbox = document.getElementById('electivas-checkbox');
+            const correlativasCheckbox = document.getElementById('correlativas-checkbox');
+            const nivelSelect = document.getElementById('nivel-select');
+            const modalidadSelect = document.getElementById('modalidad-select');
 
             // Suponiendo que materias es un array de objetos pasados desde el contexto
             var materias = {{ materias_no_aprobadas|safe }};
@@ -366,16 +370,44 @@
                 updateDatalist(filteredMaterias);
             });
             // Event listener para seleccionar una opción
-        searchInput.addEventListener('change', function() {
-                var selectedValue = searchInput.value;
-                logSelectedOption(selectedValue);
-            });
-
-            // Función para hacer log de la opción seleccionada
-            function logSelectedOption(option) {
-                console.log('Opción seleccionada:', option);
-                // Aquí puedes hacer lo que necesites con la opción seleccionada
+            
+            // Función para manejar el cambio en los checkboxes
+            function handleCorrelativasChange(event) {
+                const checkbox = event.target;
+                const checkboxName = checkbox.id.replace('-checkbox', ''); // Remueve "-checkbox" para obtener el nombre
+                console.log(`${checkboxName} checkbox is ${checkbox.checked ? 'checked' : 'unchecked'}`);
             }
+            function handleElectivasChange(event) {
+                const checkbox = event.target;
+                const checkboxName = checkbox.id.replace('-checkbox', ''); // Remueve "-checkbox" para obtener el nombre
+                console.log(`${checkboxName} checkbox is ${checkbox.checked ? 'checked' : 'unchecked'}`);
+            }
+            // Función para manejar el cambio en el selector de niveles
+            function handleNivelChange(event) {
+                const selectedOption = event.target.options[event.target.selectedIndex];
+                const value = selectedOption.value;
+                const text = selectedOption.text;
+                console.log(`Nivel seleccionado: ${text} (Valor: ${value})`);
+            }
+
+            // Función para manejar el cambio en el selector de modalidades
+            function handleModalidadChange(event) {
+                const selectedOption = event.target.options[event.target.selectedIndex];
+                const value = selectedOption.value;
+                const text = selectedOption.text;
+                console.log(`Modalidad seleccionada: ${text} (Valor: ${value})`);
+            }
+
+            // Agrega event listeners para el cambio en los selectores
+            nivelSelect.addEventListener('change', handleNivelChange);
+            modalidadSelect.addEventListener('change', handleModalidadChange);
+            electivasCheckbox.addEventListener('change', handleElectivasChange);
+            correlativasCheckbox.addEventListener('change', handleCorrelativasChange);
+            searchInput.addEventListener('change', function() {
+                var selectedValue = searchInput.value;
+                console.log(selectedValue);
+            });
+            
         });
         
     </script>
