@@ -62,4 +62,3 @@ for nivel, nombre, modalidad, carga_horaria, correlativas_regular_nombres, corre
     materia.correlativasRegular.set(correlativas_regular)
     materia.correlativasAprobadas.set(correlativas_aprobadas)
     materia.save()
-

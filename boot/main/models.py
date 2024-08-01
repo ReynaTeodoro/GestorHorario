@@ -40,6 +40,7 @@ class Materia(models.Model):
 class Curso(models.Model):
     materia = models.ForeignKey(Materia, on_delete=models.CASCADE, related_name='horarios', null=True, blank=True)
     nombre = models.CharField( max_length=50)
+    modalidad = models.ForeignKey(Modalidad, on_delete=models.CASCADE,default=5)
 
     def __str__(self):
         return f'{self.nombre} - {self.materia.nombre}'
