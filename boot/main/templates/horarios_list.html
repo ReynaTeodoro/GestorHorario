@@ -1,0 +1,7 @@
+{% for horario in horarios %}
+    <li class="list-group-item">
+        {{ horario.get_dia_display }}: {{ horario.hora_inicio }} - {{ horario.hora_fin }}
+    </li>
+{% empty %}
+    <li class="list-group-item">No hay horarios cargados.</li>
+{% endfor %}

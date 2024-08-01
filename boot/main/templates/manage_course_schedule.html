@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestionar Horarios</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Gestionar Horarios</h2>
+
+        <!-- Formulario para seleccionar un curso -->
+        <form method="post" class="mb-4">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="curso">Seleccionar Curso:</label>
+                <select id="curso" name="curso" class="form-control">
+                    <option value="">-- Seleccionar --</option>
+                    {% for curso in cursos %}
+                        <option value="{{ curso.id }}" {% if curso.id == curso_id %}selected{% endif %}>{{ curso.nombre }} - {{ curso.materia }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" name="course_select" class="btn btn-primary">Seleccionar Curso</button>
+            
+        </form>
+
+        {% if curso %}
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3>{{curso.nombre}} - {{curso.materia}}</h3>
+            <div>
+                <form method="post" class="d-inline-block">
+                    {% csrf_token %}
+                    <input type="hidden" name="curso_id" value="{{ curso.id }}">
+                    <button type="submit" name="previous_course" class="btn btn-secondary">Curso Anterior</button>
+                </form>
+                <form method="post" class="d-inline-block ml-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="curso_id" value="{{ curso.id }}">
+                    <button type="submit" name="next_course" class="btn btn-secondary">Siguiente Curso</button>
+                </form>
+            </div>
+        </div>
+        <ul class="list-group">
+            {% for horario in horarios %}
+                <li class="list-group-item">
+                    {{ horario.get_dia_display }}: {{ horario.hora_inicio }} - {{ horario.hora_fin }} - {{horario.modalidad}}
+                </li>
+            {% empty %}
+                <li class="list-group-item">No hay horarios cargados.</li>
+            {% endfor %}
+        </ul>
+        <!-- Formulario para agregar horarios -->
+        <form method="post" class="mb-4">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <input type="hidden" name="curso_id" value="{{ curso.id }}">
+            <button type="submit" name="add_schedule" class="btn btn-primary">Agregar Horario</button>
+        </form>
+
+        
+
+        {% endif %}
+    </div>
+</body>
+</html>
