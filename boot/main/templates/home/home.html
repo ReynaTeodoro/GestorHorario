@@ -194,24 +194,39 @@
                 }
             }
         }
-        function updateTable(){
-            const tbody = document.getElementById("tablaHorario").querySelector("tbody");
-            tableData.forEach((columnData, col) => {
-                if (col!=0) {
-                    columnData.forEach((cellData, row) => {
-                    const cell = tbody.rows[row].cells[col];
-                    if(cellData){
-                        const color = String(cellData.color).trim();
-                        cell.innerText = cellData.curso;
-                        cell.style.backgroundColor = cellData.color;
-                        cell.style.color = getContrastingTextColor(color);
+        function updateTable() {
+    const tbody = document.getElementById("tablaHorario").querySelector("tbody");
+    tableData.forEach((columnData, col) => {
+        if (col != 0) {
+            let prevCellData = null;
+            let rowspan = 1;
+            columnData.forEach((cellData, row) => {
+                const cell = tbody.rows[row].cells[col];
+                if (cellData) {
+                    const color = String(cellData.color).trim();
+                    cell.innerText = cellData.curso;
+                    cell.style.backgroundColor = cellData.color;
+                    cell.style.color = getContrastingTextColor(color);
+                    cell.style.verticalAlign = "middle"; // Centrado vertical
+                    cell.style.textAlign = "center"; // Centrado horizontal
+                    cell.style.height = "50px"; // Altura suficiente para notar el centrado vertical
+
+                    if (prevCellData && prevCellData.curso === cellData.curso) {
+                        rowspan++;
+                        cell.style.display = "none";  // Ocultar la celda actual
+                        tbody.rows[row - rowspan + 1].cells[col].rowSpan = rowspan; // Aumentar el rowspan de la celda anterior
+                    } else {
+                        rowspan = 1; // Resetear el rowspan
                     }
-                });
-                    
+                    prevCellData = cellData;
+                } else {
+                    prevCellData = null;
+                    rowspan = 1;
                 }
-                
             });
         }
+    });
+}
         function parseColor(dataString){
             // Patron para encontrar el color
             const colorPattern = /&Color;#([\da-fA-F]{6})/;

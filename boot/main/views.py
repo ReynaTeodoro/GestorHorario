@@ -15,6 +15,7 @@ def home_view(request):
     horarios = Horario.objects.all()
     modalidades = Modalidad.objects.all()
     niveles = Nivel.objects.all()
+    #dias = ["Lunes", "Martes", "Miercoles", "Jueves", "Viernes","Sabado"]
     dias = ["Lunes", "Martes", "Miercoles", "Jueves", "Viernes","Sabado"]
     materias_no_aprobadas = serialize('json', materias)
     materias_aprobadas = serialize('json', aprobadas)
