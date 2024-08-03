@@ -33,16 +33,42 @@
             padding: 0.5rem !important;
         }
     </style>
+    <style>
+        .dropdown-menu {
+            max-height: 200px;
+            overflow-y: auto;
+            width: 100%; /* Make dropdown same width as input */
+            margin-top: -1px; /* Align dropdown with input */
+            border-top: 0; /* Remove border between input and dropdown */
+            display: none; /* Initially hide dropdown */
+        }
+        .dropdown-menu.show {
+            display: block; /* Show dropdown when .show class is added */
+        }
+        .clear-button {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: transparent;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
     <div class="container-fluid">
-            
         <div class="" style="display: grid; grid-template-columns: 25% auto;">
             <div class="border-right p-4" >
-                <input type="text" id="search-input" class="form-control mb-3" placeholder="Buscar materia" list="materias-datalist">
-            <datalist id="materias-datalist">
-                <!-- Las opciones del datalist se actualizarán aquí -->
-            </datalist> 
+                <div class="dropdown mb-3" style="position: relative;">
+                    <input type="text" id="search-input2" class="form-control" placeholder="Buscar materia">
+                    <button id="clear-button" class="clear-button" aria-label="Limpiar">
+                        <span>&times;</span> <!-- "×" character for clear button -->
+                    </button>
+                    <ul class="dropdown-menu" id="dropdown-menu">
+                        <!-- Options will be added dynamically -->
+                    </ul>
+                </div>
                 <select id="nivel-select" class="form-select mb-3">
                     <option value="">Todos los niveles</option>
                     {% for nivel in niveles %}
@@ -511,29 +537,6 @@
 
             
 
-            // Función para actualizar las opciones del datalist
-            function updateDatalist(list) {
-                materiasDatalist.innerHTML = ''; // Limpia las opciones actuales
-                list.forEach(function(materia) {
-                    var option = document.createElement('option');
-                    option.value = materia.fields.nombre; // Cambia esto si tu estructura es diferente
-                    materiasDatalist.appendChild(option);
-                });
-            }
-
-            // Inicializa el datalist con todas las materias
-            updateDatalist(materias);
-
-            // Event listener para buscar en la lista
-            searchInput.addEventListener('input', function() {
-                var searchText = searchInput.value.toLowerCase();
-                var filteredMaterias = materias.filter(function(materia) {
-                    return materia.fields.nombre.toLowerCase().includes(searchText);
-                });
-                updateDatalist(filteredMaterias);
-            });
-            // Event listener para seleccionar una opción
-            
             // Función para manejar el cambio en los checkboxes
             function handleCorrelativasChange(event) {
                 const checkbox = event.target;
@@ -564,21 +567,21 @@
             modalidadSelect.addEventListener('change', handleModalidadChange);
             electivasCheckbox.addEventListener('change', handleElectivasChange);
             correlativasCheckbox.addEventListener('change', handleCorrelativasChange);
-            searchInput.addEventListener('change', function() {
-                var selectedValue = searchInput.value;
-                updateMateriasList();
-
-            });
             
         });
-        function updateMateriasList() {
+        function updateMateriasList(selectedCourseId) {
             
             const materiasList = document.getElementById('materias-list');
             const nivelSelect = document.getElementById('nivel-select');
             const modalidadSelect = document.getElementById('modalidad-select');
             const electivasCheckbox = document.getElementById('electivas-checkbox');
             const correlativasCheckbox = document.getElementById('correlativas-checkbox');
+            var searchInput = null
+            if(selectedCourseId){
+                searchInput = selectedCourseId
+            }
             var nivelValue = nivelSelect.value;
+            
             if(nivelValue == ''){
                 nivelValue = null;
             }else{
@@ -597,6 +600,11 @@
             var materiasAprobadas = {{ materias_aprobadas|safe }};
             // Filtrar las materias según los valores seleccionados
             const filteredMaterias = materias.filter(materia => {
+                if(searchInput){
+                    document.getElementById('search-input2').value = '';
+                    return materia.pk == searchInput
+
+                }
                 const nivelMatch = nivelValue === null || materia.fields.nivel === nivelValue;
                 const modalidadMatch = modalidadValue === null || materia.fields.modalidad === modalidadValue;
                 if(electivasChecked){
@@ -628,12 +636,72 @@
         }
         
     </script>
+    <script>
+        // Array of course objects
+        const courses = {{ materias_no_aprobadas|safe }};
+        const dropdownMenu = document.getElementById('dropdown-menu');
+        function updateDropdown(searchText) {
+            var filteredCourses = courses.filter(course => course.fields.nombre.toLowerCase().includes(searchText.toLowerCase()));
+            
+            dropdownMenu.innerHTML = '';
+
+            if (filteredCourses.length > 0) {
+                dropdownMenu.classList.add('show');
+            } else {
+                dropdownMenu.classList.remove('show');
+            }
+
+            filteredCourses.forEach(course => {
+                const item = document.createElement('li');
+                item.className = 'dropdown-item';
+                item.textContent = course.fields.nombre;
+                item.onclick = function() {
+                    document.getElementById('search-input2').value = course.fields.nombre; // Set input value to course ID
+                    dropdownMenu.innerHTML = ''; // Clear dropdown menu after selection
+                    dropdownMenu.classList.remove('show'); // Hide dropdown menu after selection
+                    console.log('ID del curso seleccionado:', course.pk); // Log the selected course ID
+                    updateMateriasList(course.pk );
+                };
+                dropdownMenu.appendChild(item);
+            });
+        }
+
+        document.getElementById('search-input2').addEventListener('input', function() {
+            updateDropdown(this.value);
+        });
+
+        document.getElementById('search-input2').addEventListener('focus', function() {
+            updateDropdown(this.value);
+        });
+
+        document.getElementById('clear-button').addEventListener('click', function() {
+            document.getElementById('search-input2').value = '';
+            updateMateriasList()
+            updateDropdown('');
+        });
+
+        document.addEventListener('click', function(event) {
+            const target = event.target;
+            if (!target.closest('.dropdown')) {
+                document.getElementById('dropdown-menu').classList.remove('show');
+            }
+        });
+        document.getElementById('search-input2').addEventListener('focus', function() {
+            updateDropdown(this.value);
+        });
+
+        // Initialize dropdown menu
+        updateDropdown('');
+        dropdownMenu.classList.remove('show');
+
+        
+    </script>
     
+    <script   script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    
 
 </body>
 </html>

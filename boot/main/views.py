@@ -9,6 +9,7 @@ from django.forms import formset_factory
 def home_view(request):
     materias = Materia.objects.filter(aprobado=False).distinct()
     aprobadas = Materia.objects.filter(aprobado=True)
+    todas_materias = Materia.objects.all()
     #materias = Materia.objects.all()
     #obtener solo los cursos que tienen horarios relacionados
     cursos = Curso.objects.all().prefetch_related('horarios')
@@ -20,13 +21,14 @@ def home_view(request):
     materias_no_aprobadas = serialize('json', materias)
     materias_aprobadas = serialize('json', aprobadas)
     madalidadesJson = serialize('json', modalidades)
+    todas_materias = serialize('json', todas_materias)
     return render(request, 'home/home.html', {'materias': materias, 'cursos': cursos,
                                                'horarios': horarios, 'dias': dias,
                                                 'modalidades':modalidades,
                                                 'niveles':niveles,'aprobadas':aprobadas,
                                                 'materias_no_aprobadas':materias_no_aprobadas,
                                                 'materias_aprobadas':materias_aprobadas,
-                                                'jsonModalidades':madalidadesJson    })
+                                                'jsonModalidades':madalidadesJson, 'todas_materias':todas_materias})
 # views.py
 
 
