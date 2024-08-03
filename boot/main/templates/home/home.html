@@ -207,16 +207,16 @@
                     cell.innerText = cellData.curso;
                     cell.style.backgroundColor = cellData.color;
                     cell.style.color = getContrastingTextColor(color);
-                    cell.style.verticalAlign = "middle"; // Centrado vertical
-                    cell.style.textAlign = "center"; // Centrado horizontal
-                    cell.style.height = "50px"; // Altura suficiente para notar el centrado vertical
+                    cell.style.verticalAlign = "middle"; 
+                    cell.style.textAlign = "center"; 
+                    cell.style.height = "50px"; 
 
                     if (prevCellData && prevCellData.curso === cellData.curso) {
                         rowspan++;
-                        cell.style.display = "none";  // Ocultar la celda actual
-                        tbody.rows[row - rowspan + 1].cells[col].rowSpan = rowspan; // Aumentar el rowspan de la celda anterior
+                        cell.style.display = "none";
+                        tbody.rows[row - rowspan + 1].cells[col].rowSpan = rowspan;
                     } else {
-                        rowspan = 1; // Resetear el rowspan
+                        rowspan = 1;
                     }
                     prevCellData = cellData;
                 } else {
