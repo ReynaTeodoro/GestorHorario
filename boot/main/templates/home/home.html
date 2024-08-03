@@ -14,7 +14,7 @@
         }
         .schedule th, .schedule td {
             border: 1px solid #ddd;
-            padding: 8px;
+            padding: 3px;
             text-align: center;
         }
         .schedule th {
@@ -37,8 +37,8 @@
 <body>
     <div class="container-fluid">
             
-        <div class="row">
-            <div class="col-md-3 border-right p-4">
+        <div class="" style="display: grid; grid-template-columns: 25% auto;">
+            <div class="border-right p-4" >
                 <input type="text" id="search-input" class="form-control mb-3" placeholder="Buscar materia" list="materias-datalist">
             <datalist id="materias-datalist">
                 <!-- Las opciones del datalist se actualizarán aquí -->
@@ -72,7 +72,7 @@
                     {% endfor %}
                 </ul>
             </div>
-            <div class="col-md-9">
+            <div class="" >
                 <table class="schedule table table-bordered" id="tablaHorario">
                     <thead>
                         <tr>
@@ -196,7 +196,39 @@
         }
         function updateTable() {
     const tbody = document.getElementById("tablaHorario").querySelector("tbody");
+    
+    console.log('tableData:',tableData);
+    let allRows = Array.from(tbody.querySelectorAll('tr'));
+    allRows.forEach(row => {
+        row.style.display = ''; // Asegurarse de que las filas están visibles
+    });
     tableData.forEach((columnData, col) => {
+        if (col == 0) {
+            // agrupa las celdas de la misma hora
+            let prevCellData = null;
+            let rowspan = 1;
+            columnData.forEach((cellData, row) => {
+                const cell = tbody.rows[row].cells[col];
+                if (cellData) {
+                    currentHora = cellData.split(':')[0];
+                    cell.innerText = currentHora;
+                    cell.style.verticalAlign = "middle"; 
+                    cell.style.textAlign = "center";  
+
+                    if (prevCellData && prevCellData === currentHora) {
+                        rowspan++;
+                        cell.style.display = "none";
+                        tbody.rows[row - rowspan + 1].cells[col].rowSpan = rowspan;
+                    } else {
+                        rowspan = 1;
+                    }
+                    prevCellData = cellData.split(':')[0];
+                } else {
+                    prevCellData = null;
+                    rowspan = 1;
+                }
+            });
+        }
         if (col != 0) {
             let prevCellData = null;
             let rowspan = 1;
@@ -204,12 +236,12 @@
                 const cell = tbody.rows[row].cells[col];
                 if (cellData) {
                     const color = String(cellData.color).trim();
-                    cell.innerText = cellData.curso;
+                    cell.innerText = cellData.curso + '\n' + cellData.horarInicio + ' - ' + cellData.horarioFin;
                     cell.style.backgroundColor = cellData.color;
                     cell.style.color = getContrastingTextColor(color);
+                    cell.style.height = "1px";
                     cell.style.verticalAlign = "middle"; 
                     cell.style.textAlign = "center"; 
-                    cell.style.height = "50px"; 
 
                     if (prevCellData && prevCellData.curso === cellData.curso) {
                         rowspan++;
@@ -226,6 +258,67 @@
             });
         }
     });
+
+    // Revisar cada 12 filas si la alguna celda tiene tiene texto, si es asi, mostrarla, sino ocultar las 6 filas y cambiar el rowspan la primera columna a 1
+    // Revisión y ajuste de filas en bloques de 12
+    // const rows = Array.from(tbody.querySelectorAll('tr'));
+    // const totalRows = rows.length;
+    // const blockSize = 12;
+    // const hideBlockSize = 6;
+
+    // for (let i = 0; i < totalRows; i += blockSize) {
+    //     const blockRows = rows.slice(i, i + blockSize);
+    //     let hasText = false;
+
+    //     blockRows.forEach(row => {
+    //         // Revisa si alguna celda en el bloque tiene texto (excepto la primera columna)
+            
+    //         for (let j = 1; j < row.cells.length; j++) {
+    //             if (row.cells[j].innerText.trim() !== '') {
+    //                 hasText = true;
+    //                 break;
+    //             }
+    //         }
+    //         if (!hasText) {
+    //             // Ajustar rowspan de la primera columna para las filas ocultas
+    //             const firstCell = row.cells[0];
+    //             if (firstCell && firstCell.rowSpan > 1) {
+    //                 firstCell.rowSpan = 1;
+    //             }
+    //             row.style.display = 'none';
+    //         }
+    //     });
+
+    //     // Ocultar las filas si el bloque no tiene texto
+    //     if (!hasText) {
+    //         blockRows.forEach((row, index) => {
+    //             if (index < hideBlockSize) {
+    //                 row.style.display = 'none';
+    //             }
+    //         });
+    //     }
+    // }
+
+    // // Eliminar filas vacías
+    // allRows = Array.from(tbody.querySelectorAll('tr'));
+    // allRows.forEach(row => {
+    //     let isEmpty = true;
+    //     for (let j = 0; j < row.cells.length; j++) {
+    //         if (row.cells[j].innerText.trim() !== '') {
+    //             isEmpty = false;
+    //             break;
+    //         }
+    //     }
+    //     if (isEmpty) {
+    //         tbody.removeChild(row);
+    //     }
+    // });
+
+    
+
+}
+function limpiarTabla(){
+
 }
         function parseColor(dataString){
             // Patron para encontrar el color
@@ -291,14 +384,13 @@
                 celdaFin = buscarCelda(horario.dia, horario.fin);
                 celdaFin.fila -=1
                 for (let index = celdaInicio.fila; index <= celdaFin.fila; index++) {
-                    tableData[celdaInicio.columna][index] = {curso: cursoYHorarios.curso, color: cursoYHorarios.color};
+                    tableData[celdaInicio.columna][index] = {curso: cursoYHorarios.curso, color: cursoYHorarios.color,horarInicio: hora_inicio, horarioFin: hora_fin};
                 }
-                updateTable()
+                
             });
-            
+            updateTable()
         }
         function initTable(idTabla,numColumns,numRows,startHour,startMinute) {
-
 
             // Generar los tiempos en intervalos de 5 minutos desde las 8:00 hasta las 24:00
             const times = [];
@@ -320,19 +412,19 @@
 
             // Obtener la referencia del cuerpo de la tabla
             const tbody = document.getElementById("tablaHorario").querySelector("tbody");
-
+            var divTabla = tbody.parentElement.parentElement;
+            divTabla.ondragover = (event) => event.preventDefault();
+            divTabla.ondrop = (event) => {
+                        event.preventDefault();
+                        const data = event.dataTransfer.getData("text/plain");
+                        dropCurso(data);
+                    };
             // Crear cuerpo de la tabla
             for (let row = 0; row < numRows; row++) {
                 const tr = tbody.insertRow();
                 for (let col = 0; col < numColumns; col++) {
                     const td = tr.insertCell();
                     td.innerText = tableData[col][row];
-                    td.ondragover = (event) => event.preventDefault();
-                    td.ondrop = (event) => {
-                        event.preventDefault();
-                        const data = event.dataTransfer.getData("text/plain");
-                        dropCurso(data);
-                    };
                 }
             }
             return tableData;
@@ -426,6 +518,7 @@
         });
         
     </script>
+    
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
