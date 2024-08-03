@@ -19,12 +19,14 @@ def home_view(request):
     dias = ["Lunes", "Martes", "Miercoles", "Jueves", "Viernes","Sabado"]
     materias_no_aprobadas = serialize('json', materias)
     materias_aprobadas = serialize('json', aprobadas)
+    madalidadesJson = serialize('json', modalidades)
     return render(request, 'home/home.html', {'materias': materias, 'cursos': cursos,
                                                'horarios': horarios, 'dias': dias,
                                                 'modalidades':modalidades,
                                                 'niveles':niveles,'aprobadas':aprobadas,
                                                 'materias_no_aprobadas':materias_no_aprobadas,
-                                                'materias_aprobadas':materias_aprobadas})
+                                                'materias_aprobadas':materias_aprobadas,
+                                                'jsonModalidades':madalidadesJson    })
 # views.py
 
 

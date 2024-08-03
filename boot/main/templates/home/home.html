@@ -88,7 +88,22 @@
             </div>
         </div>
     </div>
-
+    <!-- Modal de Error -->
+     
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="exampleModalLabel">Error</h1>
+            </div>
+            <div class="modal-body" id="errorMessage">
+              <!-- El mensaje de error se insertará aquí -->
+            </div>
+            <div class="modal-footer">
+            </div>
+          </div>
+        </div>
+      </div>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.materia-link').forEach(link => {
@@ -142,6 +157,14 @@
     
     </script>
     <script>
+        function mostrarModalError(mensaje) {
+    // Establecer el mensaje en el modal
+    document.getElementById('errorMessage').innerHTML = mensaje;
+
+    // Mostrar el modal de error
+    var myModal = new bootstrap.Modal(document.getElementById('exampleModal'));
+    myModal.show();
+}
         var tableData = [];
         function getContrastingTextColor(hexColor) {
     // Remove the hash symbol if present
@@ -178,7 +201,7 @@
             }
 
             const filaEncontrada = tableData[0].find(horaEnTabla => horaEnTabla === hora);
-
+            
             if (!filaEncontrada) {
                 console.log('Hora no encontrada');
             } else {
@@ -190,6 +213,9 @@
                 } else {
                     // La fila se encuentra en la posición de `tableData.indexOf(filaEncontrada)`
                     const filaIndex = tableData[0].indexOf(filaEncontrada);
+                    if (!tableData[columnaEncontrada][filaIndex] == '') {
+                        return { fila: filaIndex, columna: columnaEncontrada, error:'Horario incompatible' }
+                    }
                     return  { fila: filaIndex, columna: columnaEncontrada }
                 }
             }
@@ -197,7 +223,6 @@
         function updateTable() {
     const tbody = document.getElementById("tablaHorario").querySelector("tbody");
     
-    console.log('tableData:',tableData);
     let allRows = Array.from(tbody.querySelectorAll('tr'));
     allRows.forEach(row => {
         row.style.display = ''; // Asegurarse de que las filas están visibles
@@ -258,14 +283,15 @@
             });
         }
     });
-
+    
     // Revisar cada 12 filas si la alguna celda tiene tiene texto, si es asi, mostrarla, sino ocultar las 6 filas y cambiar el rowspan la primera columna a 1
+
     // Revisión y ajuste de filas en bloques de 12
     // const rows = Array.from(tbody.querySelectorAll('tr'));
     // const totalRows = rows.length;
     // const blockSize = 12;
     // const hideBlockSize = 6;
-
+    
     // for (let i = 0; i < totalRows; i += blockSize) {
     //     const blockRows = rows.slice(i, i + blockSize);
     //     let hasText = false;
@@ -283,6 +309,7 @@
     //             // Ajustar rowspan de la primera columna para las filas ocultas
     //             const firstCell = row.cells[0];
     //             if (firstCell && firstCell.rowSpan > 1) {
+    //                 console.log(firstCell);
     //                 firstCell.rowSpan = 1;
     //             }
     //             row.style.display = 'none';
@@ -317,9 +344,23 @@
     
 
 }
-function limpiarTabla(){
+        function restarMinutos(hora, minutosARestar) {
+            // Dividir la hora en horas y minutos
+            let [horas, minutos] = hora.split(':').map(Number);
 
-}
+            // Crear un objeto Date con la hora actual
+            let fecha = new Date();
+            fecha.setHours(horas, minutos, 0, 0); // Establecer horas y minutos
+
+            // Restar los minutos
+            fecha.setMinutes(fecha.getMinutes() - minutosARestar);
+
+            // Obtener la nueva hora y minutos
+            let nuevasHoras = fecha.getHours().toString().padStart(2, '0');
+            let nuevosMinutos = fecha.getMinutes().toString().padStart(2, '0');
+
+            return `${nuevasHoras}:${nuevosMinutos}`;
+        }
         function parseColor(dataString){
             // Patron para encontrar el color
             const colorPattern = /&Color;#([\da-fA-F]{6})/;
@@ -379,6 +420,24 @@ function limpiarTabla(){
             const cursoYHorarios = parseCursoYHorarios(data);
             cursoYHorarios.horarios.forEach(horario => {
                 hora_inicio = horario.inicio;
+                hora_fin = restarMinutos(horario.fin, 5);
+                celdaInicio = buscarCelda(horario.dia, horario.inicio);
+                celdaFin = buscarCelda(horario.dia,hora_fin );
+                
+                if (celdaInicio.error || celdaFin.error) {
+                    let mensajeError = '';
+                    if (celdaInicio.error) {
+                        mensajeError += 'Error en celda de inicio: ' + celdaInicio.error + '<br>';
+                    }
+                    if (celdaFin.error) {
+                        mensajeError += 'Error en celda de fin: ' + celdaFin.error + '<br>';
+                    }
+                    mostrarModalError(mensajeError);
+                    return
+                }
+            })
+            cursoYHorarios.horarios.forEach(horario => {
+                hora_inicio = horario.inicio;
                 hora_fin = horario.fin;
                 celdaInicio = buscarCelda(horario.dia, horario.inicio);
                 celdaFin = buscarCelda(horario.dia, horario.fin);
@@ -435,9 +494,7 @@ function limpiarTabla(){
             let startHour = 8;
             let startMinute = 0;
             tableData = initTable("tablaHorario",numColumns,numRows,startHour,startMinute);
-            console.log('iniciooo');
             var materias = {{ materias_no_aprobadas|safe }};
-            console.log('materias:',materias);
         });
         
     </script>
@@ -450,10 +507,9 @@ function limpiarTabla(){
             const correlativasCheckbox = document.getElementById('correlativas-checkbox');
             const nivelSelect = document.getElementById('nivel-select');
             const modalidadSelect = document.getElementById('modalidad-select');
-
-            // Suponiendo que materias es un array de objetos pasados desde el contexto
             var materias = {{ materias_no_aprobadas|safe }};
-            console.log(materias);
+
+            
 
             // Función para actualizar las opciones del datalist
             function updateDatalist(list) {
@@ -482,27 +538,25 @@ function limpiarTabla(){
             function handleCorrelativasChange(event) {
                 const checkbox = event.target;
                 const checkboxName = checkbox.id.replace('-checkbox', ''); // Remueve "-checkbox" para obtener el nombre
-                console.log(`${checkboxName} checkbox is ${checkbox.checked ? 'checked' : 'unchecked'}`);
+                updateMateriasList();
             }
             function handleElectivasChange(event) {
                 const checkbox = event.target;
                 const checkboxName = checkbox.id.replace('-checkbox', ''); // Remueve "-checkbox" para obtener el nombre
-                console.log(`${checkboxName} checkbox is ${checkbox.checked ? 'checked' : 'unchecked'}`);
+                updateMateriasList();
             }
             // Función para manejar el cambio en el selector de niveles
             function handleNivelChange(event) {
                 const selectedOption = event.target.options[event.target.selectedIndex];
                 const value = selectedOption.value;
                 const text = selectedOption.text;
-                console.log(`Nivel seleccionado: ${text} (Valor: ${value})`);
+                updateMateriasList();
             }
 
             // Función para manejar el cambio en el selector de modalidades
             function handleModalidadChange(event) {
-                const selectedOption = event.target.options[event.target.selectedIndex];
-                const value = selectedOption.value;
-                const text = selectedOption.text;
-                console.log(`Modalidad seleccionada: ${text} (Valor: ${value})`);
+                updateMateriasList();
+                
             }
 
             // Agrega event listeners para el cambio en los selectores
@@ -512,10 +566,66 @@ function limpiarTabla(){
             correlativasCheckbox.addEventListener('change', handleCorrelativasChange);
             searchInput.addEventListener('change', function() {
                 var selectedValue = searchInput.value;
-                console.log(selectedValue);
+                updateMateriasList();
+
             });
             
         });
+        function updateMateriasList() {
+            
+            const materiasList = document.getElementById('materias-list');
+            const nivelSelect = document.getElementById('nivel-select');
+            const modalidadSelect = document.getElementById('modalidad-select');
+            const electivasCheckbox = document.getElementById('electivas-checkbox');
+            const correlativasCheckbox = document.getElementById('correlativas-checkbox');
+            var nivelValue = nivelSelect.value;
+            if(nivelValue == ''){
+                nivelValue = null;
+            }else{
+                nivelValue = parseInt(nivelValue);
+            }
+            var modalidadValue = modalidadSelect.value;
+            if (modalidadValue === '') {
+                modalidadValue = null;
+            }else{
+                modalidadValue = parseInt(modalidadValue);
+            }
+            const electivasChecked = electivasCheckbox.checked;
+            const correlativasChecked = correlativasCheckbox.checked;
+            
+            var materias = {{ materias_no_aprobadas|safe }};
+            var materiasAprobadas = {{ materias_aprobadas|safe }};
+            // Filtrar las materias según los valores seleccionados
+            const filteredMaterias = materias.filter(materia => {
+                const nivelMatch = nivelValue === null || materia.fields.nivel === nivelValue;
+                const modalidadMatch = modalidadValue === null || materia.fields.modalidad === modalidadValue;
+                if(electivasChecked){
+                    electivaMatch = true
+                }else{
+                    electivaMatch = materia.fields.electiva === electivasChecked;
+                }
+                return nivelMatch && modalidadMatch && electivaMatch;
+            });
+            materiasList.innerHTML = '';
+            console.log('Filtered materias:', filteredMaterias);
+            filteredMaterias.forEach(materia => {
+
+                // Crea un nuevo elemento li con el contenido necesario
+                const li = document.createElement('li');
+                li.className = 'list-group-item p-2 materia-item';
+                li.setAttribute('data-nivel', materia.pk);
+
+                // Crea el contenido del li
+                li.innerHTML = `
+                    <a href="#" class="materia-link text-decoration-none" data-id=${materia.pk} aria-expanded="false" aria-controls="collapse${materia.pk}">${materia.fields.nombre}</a>
+                    <div id="collapse${materia.pk}" class="collapse"></div>
+                `;
+
+                // Añade el nuevo li al ul
+                materiasList.appendChild(li);
+            });
+            
+        }
         
     </script>
     
@@ -523,5 +633,7 @@ function limpiarTabla(){
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    
+
 </body>
 </html>
